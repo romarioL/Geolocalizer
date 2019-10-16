@@ -2,15 +2,17 @@ const express = require("express")
 
 const router = express.Router()
 
-const geolocalizer = require("../models/geolocalizer")
+const distanceCalculator = require("../models/distancecalculator")
 
-const haversine = require("../models/haversine")
+
 
 
 router.get('/', (req, res ) => {
-	 const  ip = req.headers['x-forwarded-for']
-	 const geolocation =  geolocalizer("187.19.199.2")
-	 res.send(geolocation)
+
+	 const distance = distanceCalculator("207.97.227.239", "187.19.199.2")
+
+	  res.send({distance: distance})
+ 
 })
 
 
