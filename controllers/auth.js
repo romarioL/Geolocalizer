@@ -77,6 +77,8 @@ router.post("/login",  async (req, res) => {
 
    }catch(e) {
 
+   	 return res.status(400).send({error: " It was not possible to log in"})
+
    }
 
 
