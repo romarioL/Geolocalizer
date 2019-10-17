@@ -9,6 +9,10 @@ const User = require("../models/user")
 const jwt = require("jsonwebtoken")
 
 
+const bcrypt = require("bcryptjs")
+
+
+
 const generateToken =  ( params = {})  => jwt.sign({params}, process.env.SECRET, {expiresIn: 300})
 
 
@@ -20,7 +24,7 @@ router.post('/register', async (req, res ) => {
 	  try {
 
 
-	  	   const {email}  = req.body
+	  	   const {name, email, password}  = req.body
 
 	  	  
 
@@ -29,7 +33,20 @@ router.post('/register', async (req, res ) => {
 	        }
 
 
-	       const user = await User.create(req.body)
+	       
+
+	     
+  	 	 		await bcrypt.hash(password,  10, (err, hash) => {
+  	 	             user.name = name
+  	 	             user.email = email
+  	 	             user.password = hash 
+  	 	             user.save()
+  	 			 })
+
+  	 	 	const user = await User.create(req.body)
+  	 		
+
+
 
 	       user.password = undefined
 
@@ -40,6 +57,8 @@ router.post('/register', async (req, res ) => {
 
 
 	      	 return  res.send({error: " It was not possible to register user"})
+
+	      	
 
 	      	 
 	      }
@@ -52,10 +71,13 @@ router.post('/register', async (req, res ) => {
 router.post("/login",  async (req, res) => {
 
 	try {
-	   const {email} = req.body
+	   const {email, password} = req.body
+
+	   
 
        const user = await User.findOne({email}).select("+password")
 
+      
 
        
 
@@ -68,10 +90,21 @@ router.post("/login",  async (req, res) => {
 
        }
 
-        if(user.password == req.body.password)  {
+         await bcrypt.compare(password, user.password, (err, response) => {
+         	if(err) {
+         	  return res.status(400).send({error: "Error at hashing"})
 
-       	    	return res.send({auth: "You are logged  in", token: generateToken({id: user._id})})
-       	    }
+         	}
+
+         	if(response) {
+         		return res.send({auth: "You are logged  in", token: generateToken({id: user._id})})
+         	}else {
+
+         		return res.status(400).send({error: "Invalid password"})
+         	}
+
+         })
+        
 
         
 
