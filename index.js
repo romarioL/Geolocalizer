@@ -6,6 +6,10 @@ const port = process.env.PORT || 3000
 
 const app = express()
 
+const jwt = require("jsonwebtoken")
+
+require("dotenv-safe").config()
+
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: false}))
