@@ -8,6 +8,12 @@ const User = require("../models/user")
 
 const jwt = require("jsonwebtoken")
 
+const passport = require("passport")
+
+const signup = require("../middlewares/signup")
+
+const login = require("../middlewares/login")
+
 
 const bcrypt = require("bcryptjs")
 
@@ -18,103 +24,51 @@ const generateToken =  ( params = {})  => jwt.sign({params}, process.env.SECRET,
 
 
 
-router.post('/register', async (req, res ) => {
+router.post('/register', passport.authenticate('signup', {session: false}), async (req, res, next ) => {
 
 	
-	  try {
-
-
-	  	   const {name, email, password}  = req.body
+	 res.send({
+     message: "Successfully sign up",
+     user: req.user
+   })
 
 	  	  
-
-	        if (await User.findOne({email})) {
-	  	         return res.status(400).send({error: "There is already an user with  this email"})
-	        }
-
-
-	       
-
-	     
-  	 	 		await bcrypt.hash(password,  10, (err, hash) => {
-  	 	             user.name = name
-  	 	             user.email = email
-  	 	             user.password = hash 
-  	 	             user.save()
-  	 			 })
-
-  	 	 	const user = await User.create(req.body)
-  	 		
-
-
-
-	       user.password = undefined
-
-	       return res.send({user})	
-
-
-	      }catch(e) {
-
-
-	      	 return  res.send({error: " It was not possible to register user"})
-
-	      	
-
-	      	 
-	      }
 
 	
 
  
 })
 
-router.post("/login",  async (req, res) => {
+router.post("/login", async (req, res, next) => {
 
-	try {
-	   const {email, password} = req.body
+  passport.authenticate("login", async (err, user, info) => {
 
-	   
+    try {
 
-       const user = await User.findOne({email}).select("+password")
+    if(err || !user) {
+       const error = new Error("An error occured")
+       return next(error)
+    }
 
-      
+    req.login(user, {session: false }, async (error) => {
+      if(error) {
+        return next(error)
+      }
 
-       
+      const body = {_id: user._id, email: user.email }
 
-       if(!user ) {
+      const token = jwt.sign({user: body}, process.env.SECRET)
 
-
-       	    
-       	    return  res.status(500).send({error: "User not found"})
-
-
-       }
-
-         await bcrypt.compare(password, user.password, (err, response) => {
-         	if(err) {
-         	  return res.status(400).send({error: "Error at hashing"})
-
-         	}
-
-         	if(response) {
-         		return res.send({auth: "You are logged  in", token: generateToken({id: user._id})})
-         	}else {
-
-         		return res.status(400).send({error: "Invalid password"})
-         	}
-
-         })
-        
-
-        
-
-   }catch(e) {
-
-   	 return res.status(400).send({error: " It was not possible to log in"})
-
-   }
+      return res.json({token})
 
 
+    })
+
+  }catch(err) {
+    return next(err)
+  }
+
+  })(req, res, next)
 })
 
 

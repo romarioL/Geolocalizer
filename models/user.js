@@ -2,10 +2,6 @@ const mongoose = require("../database/index")
 
 
 const UserSchema = new mongoose.Schema({
-	name: {
-		type: String,
-		required: true
-	},
 	email: {
 		type: String, 
 		unique: true,
@@ -22,6 +18,14 @@ const UserSchema = new mongoose.Schema({
 	}
 	
 })
+
+UserSchema.methods.isValidPassword =  async (password) => {
+
+    const compare =  await bcrypt.compare(password, user.password)
+
+    return compare
+
+}
 
 
 
